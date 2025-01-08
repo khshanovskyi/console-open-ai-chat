@@ -21,17 +21,26 @@ public class OpenAIClient {
     private final ObjectMapper mapper;
     private final HttpClient httpClient;
     private final Model model;
+    private final String apiKey;
     private final boolean streamResponse;
 
-    public OpenAIClient(Model model) {
-        this(model, true);
+    public OpenAIClient(Model model, String apiKey) {
+        this(model, apiKey, true);
     }
 
-    public OpenAIClient(Model model, boolean streamResponse) {
+    public OpenAIClient(Model model, String apiKey, boolean streamResponse) {
         this.model = model;
+        this.apiKey = checkApiKey(apiKey);
         this.streamResponse = streamResponse;
         this.mapper = new ObjectMapper();
         this.httpClient = HttpClient.newHttpClient();
+    }
+
+    private String checkApiKey(String apiKey) {
+        if (apiKey == null || apiKey.isEmpty()) {
+            throw new IllegalArgumentException("apiKey cannot be null or empty");
+        }
+        return apiKey;
     }
 
     /**
