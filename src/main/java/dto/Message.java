@@ -3,5 +3,5 @@ package dto;
 /**
  * Contains <b>role</b> and message <b>content</b>
  */
-public record Message() {
+public record Message(Role role, String content) {
 }

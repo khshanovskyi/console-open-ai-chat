@@ -1,7 +1,5 @@
 package dto;
 
-import com.fasterxml.jackson.annotation.JsonValue;
-
 public enum Model {
     GPT_35_TURBO("gpt-3.5-turbo"),
     GPT_4o_MINI("gpt-4o-mini"),
@@ -13,7 +11,6 @@ public enum Model {
         this.value = value;
     }
 
-    @JsonValue
     public String getValue() {
         return value;
     }

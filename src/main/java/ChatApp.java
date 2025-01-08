@@ -19,7 +19,52 @@ public class ChatApp {
         // 6. Apply 'Message' from openAiClient to conversation messages. <br>
         // 7. Don't forget to add 'exit' point from application via console.
 
-        throw new RuntimeException("Not implemented yet");
+        Scanner scanner = new Scanner(System.in); // 1.
+        OpenAIClient client = new OpenAIClient(Model.GPT_4o_MINI, Constant.API_KEY); // 2.
+        Conversation conversation = new Conversation(); // 3.
+
+        // 4 ->
+        System.out.println("Provide System prompt or tap 'enter' to continue.'");
+        System.out.print("> ");
+        String prompt = scanner.nextLine();
+        if (!prompt.isBlank()) {
+            conversation.addMessage(new Message(Role.SYSTEM, prompt));
+            System.out.println("System prompt successfully added to conversation.");
+        } else {
+            conversation.addMessage(new Message(Role.SYSTEM, Constant.DEFAULT_SYSTEM_PROMPT));
+            System.out.printf("No System prompt provided. Will be used default System prompt: '%s'%n", Constant.DEFAULT_SYSTEM_PROMPT);
+        }
+        System.out.println();
+        // 4.
+
+        // 5 ->
+        System.out.println("Type your question or 'exit' to quit.");
+        while (true) {
+            System.out.print("> ");
+            String userInput = scanner.nextLine();
+
+            // 6 ->
+            if ("exit".equalsIgnoreCase(userInput)) {
+                System.out.println("Exiting the chat. Goodbye!");
+                break;
+            }
+            // 6.
+
+            conversation.addMessage(new Message(Role.USER, userInput));
+
+            System.out.println("AI: ");
+            try {
+                Message aiMessage = client.streamResponseWithMessage(conversation.getMessages());
+                conversation.addMessage(aiMessage);
+            } catch (Exception e) {
+                System.err.println("Error: " + e.getMessage());
+            }
+
+            System.out.println();
+        }
+        // 5.
+
+        scanner.close();
     }
 
 }

@@ -21,17 +21,26 @@ public class OpenAIClient {
     private final ObjectMapper mapper;
     private final HttpClient httpClient;
     private final Model model;
+    private final String apiKey;
     private final boolean streamResponse;
 
-    public OpenAIClient(Model model) {
-        this(model, true);
+    public OpenAIClient(Model model, String apiKey) {
+        this(model, apiKey, true);
     }
 
-    public OpenAIClient(Model model, boolean streamResponse) {
+    public OpenAIClient(Model model, String apiKey, boolean streamResponse) {
         this.model = model;
+        this.apiKey = checkApiKey(apiKey);
         this.streamResponse = streamResponse;
         this.mapper = new ObjectMapper();
         this.httpClient = HttpClient.newHttpClient();
+    }
+
+    private String checkApiKey(String apiKey) {
+        if (apiKey == null || apiKey.isEmpty()) {
+            throw new IllegalArgumentException("apiKey cannot be null or empty");
+        }
+        return apiKey;
     }
 
     /**
@@ -41,35 +50,64 @@ public class OpenAIClient {
      * @return AI message
      */
     public Message streamResponseWithMessage(List<Message> messages) throws Exception {
-        // todo:
-        //  1. Collect history and user request.
-        //  2. Create request json body:
-        //  {
-        //    "model": "gpt-4o-mini",
-        //    "messages": [
-        //      {
-        //        "role": "system",
-        //        "content": "You are a helpful assistant."
-        //      },
-        //      {
-        //        "role": "user",
-        //        "content": "What is the capital of France?"
-        //      }
-        //    ],
-        //    "stream": true
-        //  }
-        //  3. Create {@link HttpRequest}, don't forget to add api key and content type
-        //      POST https://api.openai.com/v1/chat/completions
-        //      Authorization: Bearer YOUR_API_KEY
-        //      Content-Type: application/json
-        //  4. Request to Open AI:
-        //      httpClient.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofLines())
-        //                  .thenAccept(response -> ...)
-        //                  .join();
-        //  5. Collect and print 'data' to console.
-        //  6. Return AI message with collected 'data' content.
+        ObjectNode request = mapper.createObjectNode();
+        request.put("model", this.model.getValue());
+        request.put("stream", this.streamResponse);
+        addHistory(messages, request);
 
-        throw new RuntimeException("Not implemented yet");
+        StringBuilder assistantResponse = new StringBuilder();
+        HttpRequest httpRequest = generateRequest(request);
+
+        postAndStreamToConsole(httpRequest, assistantResponse);
+
+        return new Message(Role.AI, assistantResponse.toString());
+    }
+
+    private void addHistory(List<Message> messages, ObjectNode request) {
+        ArrayNode messageArray = mapper.valueToTree(messages);
+        request.set("messages", messageArray);
+    }
+
+    private HttpRequest generateRequest(ObjectNode request) throws JsonProcessingException {
+        return HttpRequest.newBuilder()
+                .uri(Constant.OPEN_AI_API_URI)
+                .header("Authorization", "Bearer " + apiKey)
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(request)))
+                .build();
+    }
+
+    private void postAndStreamToConsole(HttpRequest httpRequest, StringBuilder assistantResponse) {
+        httpClient.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofLines())
+                .thenAccept(response -> {
+                    response.body().forEach(line -> {
+                        if (line.startsWith("data: ")) {
+                            String data = line.substring(6).trim();
+                            if (!data.equals("[DONE]")) {
+                                collectAndPrintContent(data, assistantResponse);
+                            }
+                        }
+                    });
+                })
+                .join();
+    }
+
+    private void collectAndPrintContent(String data, StringBuilder assistantResponse) {
+        try {
+            JsonNode rootNode = mapper.readTree(data);
+            JsonNode choicesNode = rootNode.get("choices");
+            if (choicesNode != null && choicesNode.isArray() && !choicesNode.isEmpty()) {
+                JsonNode deltaNode = choicesNode.get(0).get("delta");
+                if (deltaNode != null && deltaNode.has("content")) {
+                    String token = deltaNode.get("content").asText();
+                    System.out.print(token);
+                    assistantResponse.append(token);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error parsing token: " + e.getMessage());
+            System.err.println("Unexpected data structure: " + data);
+        }
     }
 
 }
