@@ -1,6 +1,4 @@
-package dto;
-
-import com.fasterxml.jackson.annotation.JsonValue;
+package task.dto;
 
 /**
  * Contains constants for roles (system, user, assistant, etc)

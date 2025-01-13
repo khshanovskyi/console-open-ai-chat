@@ -1,17 +1,11 @@
-import dto.Conversation;
-import dto.Message;
-import dto.Model;
-import dto.Role;
-import utils.Constant;
-
-import java.util.Scanner;
+package task;
 
 public class ChatApp {
 
     public static void main(String[] args) {
         //TODO:
         // 1. Add {@link Scanner} for 'System.in'.
-        // 2. Create instance of 'OpenAIClient' with model.
+        // 2. Create instance of 'task.OpenAIClient' with model.
         // 3. Create Conversation.
         // 4. Get System prompt from console or use default -> Constant#DEFAULT_SYSTEM_PROMPT
         // and add to conversation messages. <br>

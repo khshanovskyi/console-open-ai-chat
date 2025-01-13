@@ -1,8 +1,4 @@
-package dto;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+package task.dto;
 
 /**
  * Contains <b>id</b> (UUID) and list of <b>messages</b>

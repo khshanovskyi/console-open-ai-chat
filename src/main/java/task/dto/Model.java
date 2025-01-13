@@ -1,4 +1,4 @@
-package dto;
+package task.dto;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 
