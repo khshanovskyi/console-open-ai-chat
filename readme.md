@@ -17,7 +17,7 @@
 3. Create DTO for conversation, that will have of `id` and `messages` list
 4. Create `OpenAIClient` that applies history, go to Open AI API, stream response to console and return
    AI `message`
-5. Create `ChatApp` with `main` method that will work with console
+5. Create `task.ChatApp` with `main` method that will work with console
 6. **Don't forget to add Open AI `API_KEY` in `Constant` class**
 
 <details> 
