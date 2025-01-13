@@ -1,4 +1,4 @@
-package utils;
+package task.utils;
 
 import java.net.URI;
 

@@ -1,8 +1,10 @@
-import dto.Conversation;
-import dto.Message;
-import dto.Model;
-import dto.Role;
-import utils.Constant;
+package task;
+
+import task.dto.Conversation;
+import task.dto.Message;
+import task.dto.Model;
+import task.dto.Role;
+import task.utils.Constant;
 
 import java.util.Scanner;
 

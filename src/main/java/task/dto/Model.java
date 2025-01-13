@@ -1,4 +1,4 @@
-package dto;
+package task.dto;
 
 public enum Model {
     GPT_35_TURBO("gpt-3.5-turbo"),
