@@ -31,11 +31,15 @@ public class OpenAIClient {
     }
 
     public OpenAIClient(Model model, String apiKey, boolean streamResponse) {
+        this(model, apiKey, streamResponse, HttpClient.newHttpClient());
+    }
+
+    public OpenAIClient(Model model, String apiKey, boolean streamResponse, HttpClient httpClient) {
+        this.mapper = new ObjectMapper();
         this.model = model;
         this.apiKey = checkApiKey(apiKey);
         this.streamResponse = streamResponse;
-        this.mapper = new ObjectMapper();
-        this.httpClient = HttpClient.newHttpClient();
+        this.httpClient = httpClient;
     }
 
     private String checkApiKey(String apiKey) {
@@ -65,12 +69,12 @@ public class OpenAIClient {
         return new Message(Role.AI, assistantResponse.toString());
     }
 
-    private void addHistory(List<Message> messages, ObjectNode request) {
+    public void addHistory(List<Message> messages, ObjectNode request) {
         ArrayNode messageArray = mapper.valueToTree(messages);
         request.set("messages", messageArray);
     }
 
-    private HttpRequest generateRequest(ObjectNode request) throws JsonProcessingException {
+    public HttpRequest generateRequest(ObjectNode request) throws JsonProcessingException {
         return HttpRequest.newBuilder()
                 .uri(Constant.OPEN_AI_API_URI)
                 .header("Authorization", "Bearer " + apiKey)
@@ -79,7 +83,7 @@ public class OpenAIClient {
                 .build();
     }
 
-    private void postAndStreamToConsole(HttpRequest httpRequest, StringBuilder assistantResponse) {
+    public void postAndStreamToConsole(HttpRequest httpRequest, StringBuilder assistantResponse) {
         httpClient.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofLines())
                 .thenAccept(response -> {
                     response.body().forEach(line -> {
@@ -94,7 +98,7 @@ public class OpenAIClient {
                 .join();
     }
 
-    private void collectAndPrintContent(String data, StringBuilder assistantResponse) {
+    public void collectAndPrintContent(String data, StringBuilder assistantResponse) {
         try {
             JsonNode rootNode = mapper.readTree(data);
             JsonNode choicesNode = rootNode.get("choices");
