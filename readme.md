@@ -12,6 +12,7 @@
 4. Finish application via command `exit` in console
 
 ## Steps:
+PAY ATTENTION PROJECT WON'T COMPILE UNTIL YOU IMPLEMENT `Role` ENUM AND PASS THE `RoleTest`
 1. Create enum with roles (`enum Role`) with roles `system`, `user`, `assistant`
 2. Create DTO for message, that will consist of `role` and `content`
 3. Create DTO for conversation, that will have of `id` and `messages` list

@@ -1,10 +1,17 @@
 package task;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import task.dto.Message;
 import task.dto.Model;
+import task.utils.Constant;
 
 import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.List;
 
 /**
@@ -23,11 +30,15 @@ public class OpenAIClient {
     }
 
     public OpenAIClient(Model model, String apiKey, boolean streamResponse) {
+        this(model, apiKey, streamResponse, HttpClient.newHttpClient());
+    }
+
+    public OpenAIClient(Model model, String apiKey, boolean streamResponse, HttpClient httpClient) {
+        this.mapper = new ObjectMapper();
         this.model = model;
         this.apiKey = checkApiKey(apiKey);
         this.streamResponse = streamResponse;
-        this.mapper = new ObjectMapper();
-        this.httpClient = HttpClient.newHttpClient();
+        this.httpClient = httpClient;
     }
 
     private String checkApiKey(String apiKey) {
@@ -71,6 +82,56 @@ public class OpenAIClient {
         //                  .join();
         //  5. Collect and print 'data' to console.
         //  6. Return AI message with collected 'data' content.
+
+        throw new RuntimeException("Not implemented yet");
+    }
+
+
+    public void addHistory(List<Message> messages, ObjectNode request) {
+        // todo:
+        //  1. Convert messages List to ArrayNode using mapper.valueToTree
+        //  2. Add converted messages array to request object with key "messages"
+
+        throw new RuntimeException("Not implemented yet");
+    }
+
+    public HttpRequest generateRequest(ObjectNode request) throws JsonProcessingException {
+        // todo:
+        //  1. Create new HttpRequest.Builder
+        //  2. Set URI to OpenAI API endpoint
+        //  3. Add required headers:
+        //      Authorization: Bearer YOUR_API_KEY
+        //      Content-Type: application/json
+        //  4. Set POST method with request body converted to string
+        //  5. Build and return the request
+
+        throw new RuntimeException("Not implemented yet");
+    }
+
+    public void postAndStreamToConsole(HttpRequest httpRequest, StringBuilder assistantResponse) {
+        // todo:
+        //  1. Send async request using httpClient with line body handler
+        //  2. Process response lines:
+        //      - Check if line starts with "data: "
+        //      - Remove "data: " prefix and trim
+        //      - Skip if line equals "[DONE]"
+        //      - Otherwise collect and print content
+        //  3. Wait for completion with join()
+
+        throw new RuntimeException("Not implemented yet");
+    }
+
+    public void collectAndPrintContent(String data, StringBuilder assistantResponse) {
+        // todo:
+        //  1. Parse data string to JsonNode using mapper
+        //  2. Extract choices array from root node
+        //  3. Check if choices exists and is not empty
+        //  4. Get delta node from first choice
+        //  5. If delta has content:
+        //      - Extract content token as text
+        //      - Print token to console
+        //      - Append token to assistantResponse
+        //  6. Handle parsing errors with appropriate error messages
 
         throw new RuntimeException("Not implemented yet");
     }
