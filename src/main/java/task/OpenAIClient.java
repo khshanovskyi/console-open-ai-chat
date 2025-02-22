@@ -9,6 +9,7 @@ import task.dto.Message;
 import task.dto.Model;
 import task.utils.Constant;
 
+import java.io.IOException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -54,7 +55,7 @@ public class OpenAIClient {
      * @param messages message history
      * @return AI message
      */
-    public Message streamResponseWithMessage(List<Message> messages) throws Exception {
+    public Message postAndPrint(List<Message> messages) throws Exception {
         // todo:
         //  1. Collect history and user request.
         //  2. Create request json body:
@@ -104,6 +105,27 @@ public class OpenAIClient {
         //      Content-Type: application/json
         //  4. Set POST method with request body converted to string
         //  5. Build and return the request
+
+        throw new RuntimeException("Not implemented yet");
+    }
+
+    public void postRegularAndShowInConsole(HttpRequest httpRequest, StringBuilder assistantResponse) {
+        // todo:
+        //  1. Send request using httpClient.send() with:
+        //      - httpRequest as first parameter
+        //      - HttpResponse.BodyHandlers.ofString() as second parameter
+        //  2. Check if response status code is 200:
+        //      If successful (200):
+        //      - Parse response body to JsonNode using mapper.readTree()
+        //      - Get "choices" array from root node
+        //      - If choices exists and is not empty:
+        //          - Extract content from: choices[0].message.content
+        //          - If content is not null:
+        //              * Print content to console using System.out.print()
+        //              * Append content to assistantResponse
+        //      Otherwise:
+        //      - Print status code and response body
+        //  3. Handle IOException and InterruptedException by wrapping in RuntimeException
 
         throw new RuntimeException("Not implemented yet");
     }

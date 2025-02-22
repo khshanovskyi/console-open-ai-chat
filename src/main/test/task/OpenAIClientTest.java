@@ -33,6 +33,7 @@ import static org.mockito.Mockito.*;
 @TestClassOrder(ClassOrderer.OrderAnnotation.class)
 class OpenAIClientTest {
 
+    private OpenAIClient streamingOpenAIClient;
     private OpenAIClient openAIClient;
     private ObjectMapper objectMapper;
 
@@ -40,7 +41,10 @@ class OpenAIClientTest {
     private HttpClient mockHttpClient;
 
     @Mock
-    private HttpResponse<Stream<String>> mockResponse;
+    private HttpResponse<String> mockResponse;
+
+    @Mock
+    private HttpResponse<Stream<String>> mockStreamingResponse;
 
     private final String API_KEY = "test-api-key";
     private final Model TEST_MODEL = Model.GPT_35_TURBO;
@@ -48,7 +52,8 @@ class OpenAIClientTest {
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper();
-        openAIClient = new OpenAIClient(TEST_MODEL, API_KEY, true, mockHttpClient);
+        streamingOpenAIClient = new OpenAIClient(TEST_MODEL, API_KEY, true, mockHttpClient);
+        openAIClient = new OpenAIClient(TEST_MODEL, API_KEY, false, mockHttpClient);
     }
 
     @Nested
@@ -91,7 +96,7 @@ class OpenAIClientTest {
             messages.add(new Message(Role.AI, "Hi there!"));
 
             ObjectNode request = objectMapper.createObjectNode();
-            openAIClient.addHistory(messages, request);
+            streamingOpenAIClient.addHistory(messages, request);
 
             assertTrue(request.has("messages"));
             assertEquals(2, request.get("messages").size());
@@ -103,7 +108,7 @@ class OpenAIClientTest {
             List<Message> messages = new ArrayList<>();
             ObjectNode request = objectMapper.createObjectNode();
 
-            openAIClient.addHistory(messages, request);
+            streamingOpenAIClient.addHistory(messages, request);
 
             assertTrue(request.has("messages"));
             assertEquals(0, request.get("messages").size());
@@ -122,7 +127,7 @@ class OpenAIClientTest {
             request.put("model", TEST_MODEL.getValue());
             request.put("stream", true);
 
-            HttpRequest httpRequest = openAIClient.generateRequest(request);
+            HttpRequest httpRequest = streamingOpenAIClient.generateRequest(request);
 
             assertNotNull(httpRequest, "Generated HTTP request cannot be null");
             assertEquals(Constant.OPEN_AI_API_URI, httpRequest.uri(), String.format("URI should be the same '%s'", Constant.OPEN_AI_API_URI));
@@ -134,7 +139,148 @@ class OpenAIClientTest {
     }
 
     @Nested
-    @DisplayName("Response Processing Tests")
+    @DisplayName("Regular Response Processing Tests")
+    @Order(23)
+    class RegularResponseProcessingTests {
+
+        @Test
+        @DisplayName("Should process regular response and append content")
+        void shouldProcessRegularResponseAndAppendContent() throws Exception {
+            // Prepare test data
+            StringBuilder assistantResponse = new StringBuilder();
+            String responseBody = """
+                {
+                    "id": "chatcmpl-123",
+                    "object": "chat.completion",
+                    "created": 1677652288,
+                    "choices": [{
+                        "message": {
+                            "role": "assistant",
+                            "content": "Hello, how can I help you?"
+                        },
+                        "index": 0,
+                        "finish_reason": "stop"
+                    }]
+                }""";
+
+            when(mockResponse.statusCode()).thenReturn(200);
+            when(mockResponse.body()).thenReturn(responseBody);
+            when(mockHttpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                    .thenReturn(mockResponse);
+
+            // Execute test
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(Constant.OPEN_AI_API_URI)
+                    .build();
+            openAIClient.postRegularAndShowInConsole(request, assistantResponse);
+
+            // Verify results
+            assertEquals("Hello, how can I help you?", assistantResponse.toString());
+            verify(mockHttpClient).send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class));
+        }
+
+        @Test
+        @DisplayName("Should handle non-200 status code")
+        void shouldHandleNon200StatusCode() throws Exception {
+            // Prepare test data
+            StringBuilder assistantResponse = new StringBuilder();
+            when(mockResponse.statusCode()).thenReturn(400);
+            when(mockHttpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                    .thenReturn(mockResponse);
+
+            // Execute test
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(Constant.OPEN_AI_API_URI)
+                    .build();
+            openAIClient.postRegularAndShowInConsole(request, assistantResponse);
+
+            // Verify results
+            assertEquals("", assistantResponse.toString());
+            verify(mockHttpClient).send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class));
+        }
+
+        @Test
+        @DisplayName("Should handle malformed JSON response")
+        void shouldHandleMalformedJsonResponse() throws Exception {
+            // Prepare test data
+            StringBuilder assistantResponse = new StringBuilder();
+            when(mockResponse.statusCode()).thenReturn(200);
+            when(mockResponse.body()).thenReturn("invalid json");
+            when(mockHttpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                    .thenReturn(mockResponse);
+
+            // Execute test
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(Constant.OPEN_AI_API_URI)
+                    .build();
+
+            // Verify that the method throws RuntimeException
+            assertThrows(RuntimeException.class, () ->
+                    openAIClient.postRegularAndShowInConsole(request, assistantResponse));
+        }
+    }
+
+
+    @Nested
+    @DisplayName("Regular REST request/response Integration Tests")
+    @Order(25)
+    class IntegrationTests {
+
+        @Test
+        @DisplayName("Should stream response and return message")
+        void shouldStreamResponseAndReturnMessage() throws Exception {
+            List<Message> messages = List.of(new Message(Role.USER, "Test message"));
+            String aiResponse = """
+                    {
+                      "id": "chatcmpl-7vHVghsEnUygFKP9sBxX3TEBh4L3q",
+                      "object": "chat.completion",
+                      "created": 1678928387,
+                      "model": "gpt-4",
+                      "usage": {
+                        "prompt_tokens": 12,
+                        "completion_tokens": 24,
+                        "total_tokens": 36
+                      },
+                      "choices": [
+                        {
+                          "index": 0,
+                          "message": {
+                            "role": "assistant",
+                            "content": "Hello world"
+                          },
+                          "finish_reason": "stop"
+                        }
+                      ]
+                    }
+                    """;
+
+            when(mockResponse.body()).thenReturn(aiResponse);
+            when(mockResponse.statusCode()).thenReturn(200);
+            when(mockHttpClient.send(
+                    any(HttpRequest.class),
+                    any(HttpResponse.BodyHandler.class)))
+                    .thenReturn(mockResponse);
+
+            Message response = openAIClient.postAndPrint(messages);
+
+            verify(mockHttpClient, times(1)).send(
+                    any(HttpRequest.class),
+                    any(HttpResponse.BodyHandler.class)
+            );
+
+            assertNotNull(response, "Response should not be null");
+            assertEquals(Role.AI, response.role(), "Response role should be AI");
+            assertEquals("Hello world", response.content(), "Response content should match expected");
+
+            verify(mockHttpClient).send(
+                    any(HttpRequest.class),
+                    any(HttpResponse.BodyHandler.class)
+            );
+        }
+    }
+
+    @Nested
+    @DisplayName("Steaming Response Processing Tests")
     @Order(30)
     class ResponseProcessingTests {
 
@@ -151,7 +297,7 @@ class OpenAIClientTest {
                     }]
                 }""";
 
-            openAIClient.collectAndPrintContent(validData, assistantResponse);
+            streamingOpenAIClient.collectAndPrintContent(validData, assistantResponse);
 
             assertEquals("Hello", assistantResponse.toString());
         }
@@ -162,7 +308,7 @@ class OpenAIClientTest {
             StringBuilder assistantResponse = new StringBuilder();
             String invalidData = "invalid json";
 
-            openAIClient.collectAndPrintContent(invalidData, assistantResponse);
+            streamingOpenAIClient.collectAndPrintContent(invalidData, assistantResponse);
 
             assertEquals("", assistantResponse.toString());
         }
@@ -178,16 +324,16 @@ class OpenAIClientTest {
                     }]
                 }""";
 
-            openAIClient.collectAndPrintContent(dataWithoutContent, assistantResponse);
+            streamingOpenAIClient.collectAndPrintContent(dataWithoutContent, assistantResponse);
 
             assertEquals("", assistantResponse.toString());
         }
     }
 
     @Nested
-    @DisplayName("Integration Tests")
+    @DisplayName("Streaming Integration Tests")
     @Order(40)
-    class IntegrationTests {
+    class StreamingIntegrationTests {
 
         @Test
         @DisplayName("Should stream response and return message")
@@ -199,13 +345,13 @@ class OpenAIClientTest {
                     "data: [DONE]"
             );
 
-            when(mockResponse.body()).thenReturn(responseStream);
+            when(mockStreamingResponse.body()).thenReturn(responseStream);
             when(mockHttpClient.sendAsync(
                     any(HttpRequest.class),
                     any(HttpResponse.BodyHandler.class)))
-                    .thenReturn(CompletableFuture.completedFuture(mockResponse));
+                    .thenReturn(CompletableFuture.completedFuture(mockStreamingResponse));
 
-            Message response = openAIClient.streamResponseWithMessage(messages);
+            Message response = streamingOpenAIClient.postAndPrint(messages);
 
             verify(mockHttpClient, times(1)).sendAsync(
                     any(HttpRequest.class),

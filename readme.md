@@ -88,6 +88,36 @@ Content-Type: application/json
 </details> 
 
 <details> 
+<summary>Example of Open AI API regular REST responses</summary>
+
+```json
+{
+  "id": "chatcmpl-7vHVghsEnUygFKP9sBxX3TEBh4L3q",
+  "object": "chat.completion",
+  "created": 1678928387,
+  "model": "gpt-4",
+  "usage": {
+    "prompt_tokens": 12,
+    "completion_tokens": 3,
+    "total_tokens": 36
+  },
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "Hello world"
+      },
+      "finish_reason": "stop"
+    }
+  ]
+}
+```
+
+</details> 
+
+
+<details> 
 <summary>Examples of Open AI API responses from streaming</summary>
 
 <b>Pay attention that it starts from 'data: ' (it has 6 chars and then content)</b>
