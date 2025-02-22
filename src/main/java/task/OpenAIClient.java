@@ -10,6 +10,7 @@ import task.dto.Model;
 import task.dto.Role;
 import task.utils.Constant;
 
+import java.io.IOException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -55,7 +56,7 @@ public class OpenAIClient {
      * @param messages message history
      * @return AI message
      */
-    public Message streamResponseWithMessage(List<Message> messages) throws Exception {
+    public Message postAndPrint(List<Message> messages) throws Exception {
         ObjectNode request = mapper.createObjectNode();
         request.put("model", this.model.getValue());
         request.put("stream", this.streamResponse);
@@ -64,7 +65,7 @@ public class OpenAIClient {
         StringBuilder assistantResponse = new StringBuilder();
         HttpRequest httpRequest = generateRequest(request);
 
-        postAndStreamToConsole(httpRequest, assistantResponse);
+        postAndPrint(httpRequest, assistantResponse);
 
         return new Message(Role.AI, assistantResponse.toString());
     }
@@ -81,6 +82,35 @@ public class OpenAIClient {
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(request)))
                 .build();
+    }
+
+    public void postAndPrint(HttpRequest httpRequest, StringBuilder assistantResponse) {
+        if (streamResponse) {
+            postAndStreamToConsole(httpRequest, assistantResponse);
+        } else {
+            postRegularAndShowInConsole(httpRequest, assistantResponse);
+        }
+    }
+
+    public void postRegularAndShowInConsole(HttpRequest httpRequest, StringBuilder assistantResponse) {
+        try {
+            HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() == 200) {
+                JsonNode rootNode = mapper.readTree(response.body());
+                JsonNode choicesNode = rootNode.get("choices");
+                if (choicesNode != null && choicesNode.isArray() && !choicesNode.isEmpty()) {
+                    String content = choicesNode.get(0).get("message").get("content").asText();
+                    if (content != null) {
+                        System.out.print(content);
+                        assistantResponse.append(content);
+                    }
+                }
+            } else {
+                System.out.println(response.statusCode() + " " + response.body());
+            }
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void postAndStreamToConsole(HttpRequest httpRequest, StringBuilder assistantResponse) {

@@ -22,7 +22,7 @@ public class ChatApp {
         // 7. Don't forget to add 'exit' point from application via console.
 
         Scanner scanner = new Scanner(System.in); // 1.
-        OpenAIClient client = new OpenAIClient(Model.GPT_4o_MINI, Constant.API_KEY); // 2.
+        OpenAIClient client = new OpenAIClient(Model.GPT_4o_MINI, Constant.API_KEY, false); // 2.
         Conversation conversation = new Conversation(); // 3.
 
         // 4 ->
@@ -56,7 +56,7 @@ public class ChatApp {
 
             System.out.println("AI: ");
             try {
-                Message aiMessage = client.streamResponseWithMessage(conversation.getMessages());
+                Message aiMessage = client.postAndPrint(conversation.getMessages());
                 conversation.addMessage(aiMessage);
             } catch (Exception e) {
                 System.err.println("Error: " + e.getMessage());
