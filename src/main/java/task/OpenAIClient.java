@@ -26,10 +26,6 @@ public class OpenAIClient {
     private final String apiKey;
     private final boolean streamResponse;
 
-    public OpenAIClient(Model model, String apiKey) {
-        this(model, apiKey, true);
-    }
-
     public OpenAIClient(Model model, String apiKey, boolean streamResponse) {
         this(model, apiKey, streamResponse, HttpClient.newHttpClient());
     }

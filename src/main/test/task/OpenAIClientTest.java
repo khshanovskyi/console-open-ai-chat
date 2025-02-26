@@ -64,7 +64,7 @@ class OpenAIClientTest {
         @Test
         @DisplayName("Should create client with valid parameters")
         void shouldCreateClientWithValidParameters() {
-            OpenAIClient client = new OpenAIClient(TEST_MODEL, API_KEY);
+            OpenAIClient client = new OpenAIClient(TEST_MODEL, API_KEY, true);
             assertNotNull(client);
         }
 
@@ -72,14 +72,14 @@ class OpenAIClientTest {
         @DisplayName("Should throw exception when API key is null")
         void shouldThrowExceptionWhenApiKeyIsNull() {
             assertThrows(IllegalArgumentException.class,
-                    () -> new OpenAIClient(TEST_MODEL, null));
+                    () -> new OpenAIClient(TEST_MODEL, null, true));
         }
 
         @Test
         @DisplayName("Should throw exception when API key is empty")
         void shouldThrowExceptionWhenApiKeyIsEmpty() {
             assertThrows(IllegalArgumentException.class,
-                    () -> new OpenAIClient(TEST_MODEL, ""));
+                    () -> new OpenAIClient(TEST_MODEL, "", true));
         }
     }
 
