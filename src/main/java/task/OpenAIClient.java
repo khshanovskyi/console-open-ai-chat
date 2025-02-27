@@ -1,6 +1,5 @@
 package task;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -26,10 +25,6 @@ public class OpenAIClient {
     private final Model model;
     private final String apiKey;
     private final boolean streamResponse;
-
-    public OpenAIClient(Model model, String apiKey) {
-        this(model, apiKey, true);
-    }
 
     public OpenAIClient(Model model, String apiKey, boolean streamResponse) {
         this(model, apiKey, streamResponse, HttpClient.newHttpClient());
@@ -60,36 +55,25 @@ public class OpenAIClient {
         ObjectNode request = mapper.createObjectNode();
         request.put("model", this.model.getValue());
         request.put("stream", this.streamResponse);
-        addHistory(messages, request);
-
-        StringBuilder assistantResponse = new StringBuilder();
-        HttpRequest httpRequest = generateRequest(request);
-
-        postAndPrint(httpRequest, assistantResponse);
-
-        return new Message(Role.AI, assistantResponse.toString());
-    }
-
-    public void addHistory(List<Message> messages, ObjectNode request) {
         ArrayNode messageArray = mapper.valueToTree(messages);
         request.set("messages", messageArray);
-    }
 
-    public HttpRequest generateRequest(ObjectNode request) throws JsonProcessingException {
-        return HttpRequest.newBuilder()
+        HttpRequest httpRequest = HttpRequest.newBuilder()
                 .uri(Constant.OPEN_AI_API_URI)
                 .header("Authorization", "Bearer " + apiKey)
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(request)))
                 .build();
-    }
 
-    public void postAndPrint(HttpRequest httpRequest, StringBuilder assistantResponse) {
+        StringBuilder assistantResponse = new StringBuilder();
+
         if (streamResponse) {
             postAndStreamToConsole(httpRequest, assistantResponse);
         } else {
             postRegularAndShowInConsole(httpRequest, assistantResponse);
         }
+
+        return new Message(Role.AI, assistantResponse.toString());
     }
 
     public void postRegularAndShowInConsole(HttpRequest httpRequest, StringBuilder assistantResponse) {
