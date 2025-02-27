@@ -73,34 +73,9 @@ public class OpenAIClient {
         //      POST https://api.openai.com/v1/chat/completions
         //      Authorization: Bearer YOUR_API_KEY
         //      Content-Type: application/json
-        //  4. Request to Open AI:
-        //      httpClient.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofLines())
-        //                  .thenAccept(response -> ...)
-        //                  .join();
+        //  4. Request to Open AI: implement `postRegularAndShowInConsole` and `postAndStreamToConsole`
         //  5. Collect and print 'data' to console.
         //  6. Return AI message with collected 'data' content.
-
-        throw new RuntimeException("Not implemented yet");
-    }
-
-
-    public void addHistory(List<Message> messages, ObjectNode request) {
-        // todo:
-        //  1. Convert messages List to ArrayNode using mapper.valueToTree
-        //  2. Add converted messages array to request object with key "messages"
-
-        throw new RuntimeException("Not implemented yet");
-    }
-
-    public HttpRequest generateRequest(ObjectNode request) throws JsonProcessingException {
-        // todo:
-        //  1. Create new HttpRequest.Builder
-        //  2. Set URI to OpenAI API endpoint
-        //  3. Add required headers:
-        //      Authorization: Bearer YOUR_API_KEY
-        //      Content-Type: application/json
-        //  4. Set POST method with request body converted to string
-        //  5. Build and return the request
 
         throw new RuntimeException("Not implemented yet");
     }

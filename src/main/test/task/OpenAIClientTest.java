@@ -1,7 +1,5 @@
 package task;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.ClassOrderer;
 import org.junit.jupiter.api.DisplayName;
@@ -20,7 +18,6 @@ import task.utils.Constant;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
@@ -35,7 +32,6 @@ class OpenAIClientTest {
 
     private OpenAIClient streamingOpenAIClient;
     private OpenAIClient openAIClient;
-    private ObjectMapper objectMapper;
 
     @Mock
     private HttpClient mockHttpClient;
@@ -51,7 +47,6 @@ class OpenAIClientTest {
 
     @BeforeEach
     void setUp() {
-        objectMapper = new ObjectMapper();
         streamingOpenAIClient = new OpenAIClient(TEST_MODEL, API_KEY, true, mockHttpClient);
         openAIClient = new OpenAIClient(TEST_MODEL, API_KEY, false, mockHttpClient);
     }
@@ -83,60 +78,6 @@ class OpenAIClientTest {
         }
     }
 
-    @Nested
-    @DisplayName("Message History Tests")
-    @Order(10)
-    class MessageHistoryTests {
-
-        @Test
-        @DisplayName("Should add message history to request")
-        void shouldAddMessageHistoryToRequest() {
-            List<Message> messages = new ArrayList<>();
-            messages.add(new Message(Role.USER, "Hello"));
-            messages.add(new Message(Role.AI, "Hi there!"));
-
-            ObjectNode request = objectMapper.createObjectNode();
-            streamingOpenAIClient.addHistory(messages, request);
-
-            assertTrue(request.has("messages"));
-            assertEquals(2, request.get("messages").size());
-        }
-
-        @Test
-        @DisplayName("Should handle empty message history")
-        void shouldHandleEmptyMessageHistory() {
-            List<Message> messages = new ArrayList<>();
-            ObjectNode request = objectMapper.createObjectNode();
-
-            streamingOpenAIClient.addHistory(messages, request);
-
-            assertTrue(request.has("messages"));
-            assertEquals(0, request.get("messages").size());
-        }
-    }
-
-    @Nested
-    @DisplayName("Request Generation Tests")
-    @Order(20)
-    class RequestGenerationTests {
-
-        @Test
-        @DisplayName("Should generate valid HTTP request")
-        void shouldGenerateValidHttpRequest() throws Exception {
-            ObjectNode request = objectMapper.createObjectNode();
-            request.put("model", TEST_MODEL.getValue());
-            request.put("stream", true);
-
-            HttpRequest httpRequest = streamingOpenAIClient.generateRequest(request);
-
-            assertNotNull(httpRequest, "Generated HTTP request cannot be null");
-            assertEquals(Constant.OPEN_AI_API_URI, httpRequest.uri(), String.format("URI should be the same '%s'", Constant.OPEN_AI_API_URI));
-            assertTrue(httpRequest.headers().firstValue("Authorization").isPresent(), "Authorization header is not present");
-            String bearer = httpRequest.headers().firstValue("Authorization").get().split(" ")[0];
-            assertEquals("Bearer", bearer, "Authorization token should start with 'Bearer'");
-            assertEquals("POST", httpRequest.method(), "Method should be POST");
-        }
-    }
 
     @Nested
     @DisplayName("Regular Response Processing Tests")
